@@ -1,0 +1,42 @@
+paths:
+  /api/subway-status:
+    get:
+      summary: Obtiene información del estado del subte
+      tags:
+        - Status Subway
+      responses:
+        "200":
+          description: Información del estado del subte obtenida satisfactoriamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: integer
+                    description: Marca de tiempo del estado del subte
+                  entitiesInfo:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SubwayAlertInfo"
+        "500":
+          description: Error del servidor. Error al obtener la información del estado del subte
+
+components:
+  schemas:
+    SubwayAlertInfo:
+      type: object
+      properties:
+        idLinea:
+          type: string
+          description: ID de la línea de subte
+        linea:
+          type: array
+          items:
+            type: string
+          description: Líneas afectadas por la alerta
+        alerta:
+          type: array
+          items:
+            type: string
+          description: Descripción de la alerta del subte

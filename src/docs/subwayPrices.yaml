@@ -1,0 +1,57 @@
+paths:
+  /api/subway-prices:
+    get:
+      summary: Obtiene información sobre los precios del metro
+      tags:
+        - Subway Prices
+      responses:
+        "200":
+          description: Datos de precios del metro obtenidos correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubwayPriceData"
+
+components:
+  schemas:
+    SubwayPriceData:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: ID del registro
+        tituloTarifa:
+          type: array
+          items:
+            type: object
+            properties:
+              titulo:
+                type: string
+                description: Título de la tarifa
+              _id:
+                type: string
+                description: ID del título de la tarifa
+          description: Títulos de las tarifas
+        preciosPorViaje:
+          type: array
+          items:
+            type: object
+            properties:
+              rango:
+                type: string
+                description: Rango de viajes
+              precio:
+                type: string
+                description: Precio
+              _id:
+                type: string
+                description: ID del precio
+          description: Precios por viaje
+        fecha:
+          type: string
+          description: Fecha y hora de la actualización
+        __v:
+          type: integer
+          description: Versión del documento en la base de datos

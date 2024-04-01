@@ -1,0 +1,88 @@
+paths:
+  /api/subway-information:
+    get:
+      summary: Obtiene información del subte
+      tags:
+        - Subway Information
+      responses:
+        "200":
+          description: Información del subte obtenida satisfactoriamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_updated:
+                    type: integer
+                    description: Marca de tiempo del último estado actualizado
+                  ttl:
+                    type: integer
+                    description: Tiempo de vida del estado en segundos
+                  data:
+                    type: object
+                    properties:
+                      subways:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Subway"
+        "500":
+          description: Error del servidor. Error al obtener la información del subte
+
+components:
+  schemas:
+    Subway:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID del subte
+        line:
+          type: object
+          properties:
+            tripId:
+              type: string
+              description: ID del viaje
+            routeId:
+              type: string
+              description: ID de la ruta
+            directionId:
+              type: integer
+              description: ID de la dirección
+            startTime:
+              type: string
+              description: Hora de inicio del viaje
+            startDate:
+              type: string
+              description: Fecha de inicio del viaje
+        stations:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubwayStation"
+
+    SubwayStation:
+      type: object
+      properties:
+        stopId:
+          type: string
+          description: ID de la parada
+        stopName:
+          type: string
+          description: Nombre de la parada
+        arrival:
+          type: object
+          properties:
+            time:
+              type: string
+              description: Hora de llegada
+            delay:
+              type: integer
+              description: Retraso en la llegada
+        departure:
+          type: object
+          properties:
+            time:
+              type: string
+              description: Hora de salida
+            delay:
+              type: integer
+              description: Retraso en la salida

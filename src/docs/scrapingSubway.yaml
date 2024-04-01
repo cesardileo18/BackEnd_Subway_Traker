@@ -1,0 +1,103 @@
+paths:
+  /api/scraped-data:
+    get:
+      summary: Realiza scraping para extraer información de precios desde el navegador
+      tags:
+        - Scraping prices Subway
+      responses:
+        "200":
+          description: Datos de precios obtenidos correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubwayPriceData"
+    post:
+      summary: Realiza scraping para extraer información de precios desde Postman o un formulario
+      tags:
+        - Scraping prices Subway
+      responses:
+        "200":
+          description: Datos de precios actualizados correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubwayPriceData"
+
+  /api/update-scraped-data:
+    get:
+      summary: Actualiza los datos de precios desde el navegador
+      tags:
+        - Scraping prices Subway
+      responses:
+        "200":
+          description: Datos de precios actualizados desde el formulario correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubwayPriceData"
+    put:
+      summary: Actualiza los datos de precios desde Postman o un formulario
+      tags:
+        - Scraping prices Subway
+      responses:
+        "200":
+          description: Datos de precios actualizados desde Postman o el formulario correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubwayPriceData"
+
+  /api/scraped-data/{_id}:
+    delete:
+      summary: Elimina un registro de la base de datos por ID
+      tags:
+        - Scraping prices Subway
+      parameters:
+        - name: _id
+          in: path
+          required: true
+          description: ID del registro a eliminar
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Colección eliminada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Estado de la operación
+                  msg:
+                    type: string
+                    description: Mensaje sobre la operación
+
+  /api/delete-latest-scraped-data:
+    get:
+      summary: Elimina el último registro de la base de datos de manera automatizada
+      tags:
+        - Scraping prices Subway
+      responses:
+        "200":
+          description: Último registro eliminado correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Estado de la operación
+                  msg:
+                    type: string
+                    description: Mensaje sobre la operación
