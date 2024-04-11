@@ -1,12 +1,30 @@
 import fetch from 'node-fetch';
-import { InfomationSubway, SubwayAlert, PreciosSubte } from '../entity/infomationSubway.entity.js';
+import { InfomationSubway, SubwayAlert} from '../entity/infomationSubway.entity.js';
 import puppeteer from 'puppeteer';
 import { subwayModel } from '../DAO/subway.model.js';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { logger } from '../utils/main.js';
+import { DateTime } from 'luxon';
 
 class SubwayServices {
+    constructor() {
+        // Especificar la zona horaria predeterminada
+        this.defaultTimeZone = 'America/Argentina/Buenos_Aires';
+    }
+    convertirTiempo = (tiempoSegundos) => {
+        // Convertir el tiempo en segundos a una instancia de DateTime de Luxon
+        const fecha = DateTime.fromSeconds(tiempoSegundos, { zone: this.defaultTimeZone });
+        // Formatear la fecha y hora en el formato deseado
+        const fechaFormateada = fecha.toFormat('dd/MM/yyyy HH:mm:ss');
+        return fechaFormateada;
+    };
+    // Función para convertir retraso en formato legible
+    convertirRetraso = (retrasoSegundos) => {
+        const minutos = Math.floor(retrasoSegundos / 60);
+        const segundos = retrasoSegundos % 60;
+        return `${minutos} minutos y ${segundos} segundos`;
+    };
     async getSubwayStatus(req, res) {
         const url = `https://apitransporte.buenosaires.gob.ar/subtes/serviceAlerts?json=1&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}`;
         try {
@@ -33,19 +51,98 @@ class SubwayServices {
         try {
             const response = await fetch(url);
             const data = await response.json();
-            // Mapear los datos a instancias de la clase InfomationSubway y devolver siempre el segundo elemento del array
-            const info = data.Entity.map((info, index) => {
-                // Filtrar para obtener solo el segundo elemento del array
-                if ((index + 1) % 2 === 0) {
-                    return new InfomationSubway(info);
+            // Crear un objeto para almacenar el primer elemento de cada línea
+            const primerosElementos = {};
+            // Crear un objeto para almacenar el segundo elemento de cada línea
+            const segundosElementos = {};
+            // Recorrer la colección Entity
+            data.Entity.forEach(item => {
+                // Obtener el primer elemento de cada línea y agregarlo al objeto si no existe
+                const id = item.ID.split('_')[0]; // Obtener el identificador de la línea
+                if (!primerosElementos[id]) {
+                    primerosElementos[id] = {
+                        ID: item.ID,
+                        Linea: item.Linea
+                    };
                 }
-            }).filter(element => element !== undefined);
-            return info;
+            });
+            // Recorrer la colección Entity
+            data.Entity.forEach(item => {
+                // Obtener el segundo elemento de cada línea y agregarlo al objeto si existe el primero
+                const id = item.ID.split('_')[0]; // Obtener el identificador de la línea
+                if (primerosElementos[id]) {
+                    segundosElementos[id] = {
+                        ID: item.ID,
+                        Linea: item.Linea
+                    };
+                }
+            });
+            // // Convertir el objeto en un array
+            const primerosElementosArray = Object.values(primerosElementos);
+            primerosElementosArray.forEach(primerElemento => {
+                // Obtener el primer valor de "arrival" y "departure" del primer objeto de cada línea
+                const firstArrivalTime = primerElemento.Linea.Estaciones[0].arrival.time;
+                const firstDepartureTime = primerElemento.Linea.Estaciones[0].departure.time;
+
+                // Almacenar estos valores en variables
+                let arrivalTime = firstArrivalTime;
+                let departureTime = firstDepartureTime;
+
+                // Iterar sobre los objetos de la línea y actualizar los valores de "arrival" y "departure"
+                primerElemento.Linea.Estaciones.forEach(estacion => {
+                    // Convertir los tiempos de llegada y salida a instancias de DateTime de Luxon
+                    const arrivalDateTime = DateTime.fromSeconds(arrivalTime, { zone: 'America/Argentina/Buenos_Aires' });
+                    const departureDateTime = DateTime.fromSeconds(departureTime, { zone: 'America/Argentina/Buenos_Aires' });
+
+                    // Sumar 1 minuto y 36 segundos a los valores de "arrival" y "departure"
+                    arrivalTime = arrivalDateTime.plus({ minutes: 1, seconds: 36 }).toSeconds();
+                    departureTime = departureDateTime.plus({ minutes: 1, seconds: 36 }).toSeconds();
+
+                    // Actualizar los valores de "arrival" y "departure" en cada iteración
+                    estacion.arrival.time = this.convertirTiempo(arrivalTime);
+                    estacion.departure.time =  this.convertirTiempo(departureTime);
+                    estacion.arrival.delay =  this.convertirRetraso(estacion.arrival.delay);
+                    estacion.departure.delay = this.convertirRetraso(estacion.departure.delay);
+                });
+            });
+            const segundosElementosArray = Object.values(segundosElementos);
+            segundosElementosArray.forEach(primerElemento => {
+                // Obtener el primer valor de "arrival" y "departure" del primer objeto de cada línea
+                const firstArrivalTime = primerElemento.Linea.Estaciones[0].arrival.time;
+                const firstDepartureTime = primerElemento.Linea.Estaciones[0].departure.time;
+
+                // Almacenar estos valores en variables
+                let arrivalTime = firstArrivalTime;
+                let departureTime = firstDepartureTime;
+
+                // Iterar sobre los objetos de la línea y actualizar los valores de "arrival" y "departure"
+                primerElemento.Linea.Estaciones.forEach(estacion => {
+                    // Convertir los tiempos de llegada y salida a instancias de DateTime de Luxon
+                    const arrivalDateTime = DateTime.fromSeconds(arrivalTime, { zone: 'America/Argentina/Buenos_Aires' });
+                    const departureDateTime = DateTime.fromSeconds(departureTime, { zone: 'America/Argentina/Buenos_Aires' });
+
+                    // Sumar 1 minuto y 36 segundos a los valores de "arrival" y "departure"
+                    arrivalTime = arrivalDateTime.plus({ minutes: 1, seconds: 36 }).toSeconds();
+                    departureTime = departureDateTime.plus({ minutes: 1, seconds: 36 }).toSeconds();
+
+                    // Actualizar los valores de "arrival" y "departure" en cada iteración
+                    estacion.arrival.time = this.convertirTiempo(arrivalTime);
+                    estacion.departure.time =  this.convertirTiempo(departureTime);
+                    estacion.arrival.delay =  this.convertirRetraso(estacion.arrival.delay);
+                    estacion.departure.delay = this.convertirRetraso(estacion.departure.delay);
+                });
+            });
+            const EstacionesSubte = {
+                ida: primerosElementosArray.map(data => new InfomationSubway(data)),
+                vuelta: segundosElementosArray.map(data => new InfomationSubway(data))
+            };
+            return EstacionesSubte;
+  
         } catch (error) {
             console.error('Error fetching data:', error);
             throw new Error('Internal server error');
         }
-    };
+    }
     async postSubwayPrice(req, res) {
         try {
 
